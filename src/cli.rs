@@ -20,10 +20,10 @@ pub const DEFAULT_TARGET: &str = "System";
     after_help = "EXAMPLES:
     evtail                                 last 10 events from System
     evtail -f Application                  follow the Application channel
-    evtail -n 50 --level err System        last 50 events, warning or worse
+    evtail -n 50 --level err System        last 50 events, error or worse
     evtail -f --provider \"Service Control Manager\" System
     evtail --format json -n 5 System | jq .
-    evtail -n 100 C:\\logs\\export.evtx     read an exported .evtx file
+    evtail -n 100 C:\\logs\\export.evtx      read an exported .evtx file
     evtail --list-channels | findstr WinRM"
 )]
 pub struct Cli {
