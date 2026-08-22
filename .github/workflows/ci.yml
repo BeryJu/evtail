@@ -20,7 +20,7 @@ jobs:
     name: fmt, clippy, test
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rustfmt, clippy
@@ -47,7 +47,7 @@ jobs:
           if ($json -and -not ($json | ConvertFrom-Json).provider) {
             throw "--format json did not produce a usable object"
           }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: evtail-x86_64-pc-windows-msvc
           path: target/release/evtail.exe
