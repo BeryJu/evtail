@@ -1,5 +1,7 @@
 # evtail
 
+[![CI](https://github.com/BeryJu/evtail/actions/workflows/ci.yml/badge.svg)](https://github.com/BeryJu/evtail/actions/workflows/ci.yml)
+
 `tail(1)` for the Windows Event Log.
 
 `wevtutil qe` is a one-shot XML dump with no follow mode, and `Get-WinEvent` is
@@ -127,3 +129,21 @@ PowerShell process starts:
 ```console
 evtail -f "Windows PowerShell"      # then run `powershell -c exit` elsewhere
 ```
+
+CI runs formatting, clippy, the tests and a release build on `windows-latest`,
+and uploads the built `evtail.exe` as an artifact for every push and pull
+request.
+
+## Releases
+
+Bump `version` in `Cargo.toml`, then tag and push:
+
+```console
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow re-runs CI, refuses the tag if it does not match the crate
+version, and publishes a GitHub release with a `.zip` per target — `x86_64` and
+`aarch64` Windows — each containing `evtail.exe` and the README, alongside
+sha256 checksums.

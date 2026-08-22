@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Called by release.yml so a tag cannot ship without passing the same checks.
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: fmt, clippy, test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+      - name: Formatting
+        run: cargo fmt --all --check
+      # The crate denies panic/unwrap/expect in src/, which matters most in the
+      # FFI buffer-sizing paths.
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+      - name: Tests
+        run: cargo test --locked
+      - name: Release build
+        run: cargo build --release --locked
+      # The release profile is what ships, so exercise that binary rather than
+      # trusting the debug one the tests just used.
+      - name: Smoke test the release binary
+        run: |
+          ./target/release/evtail.exe --version
+          ./target/release/evtail.exe -n 5 System
+          if (-not (./target/release/evtail.exe --list-channels | Select-String -Quiet '^Application$')) {
+            throw "--list-channels did not report the Application channel"
+          }
+          $json = ./target/release/evtail.exe -n 1 --format json System
+          if ($json -and -not ($json | ConvertFrom-Json).provider) {
+            throw "--format json did not produce a usable object"
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evtail-x86_64-pc-windows-msvc
+          path: target/release/evtail.exe
+          retention-days: 7

@@ -1,0 +1,25 @@
+version: 2
+
+updates:
+  # One grouped PR a week rather than one per crate; the lockfile is committed,
+  # so CI builds exactly what the PR proposes.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: deps
+    groups:
+      cargo:
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']

@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.*']
+  # Re-publish a tag by hand: pick the tag (not a branch) in the "Run workflow"
+  # dropdown. Both jobs below derive the version from the ref.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Same checks as a normal push; a tag that cannot pass CI does not ship.
+  ci:
+    uses: ./.github/workflows/ci.yml
+  create-release:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag must match the crate version
+        run: |
+          tag="${GITHUB_REF#refs/tags/v}"
+          version=$(grep -m1 '^version = ' Cargo.toml | cut -d'"' -f2)
+          if [ "$tag" != "$version" ]; then
+            echo "::error::tag v$tag does not match Cargo.toml version $version" >&2
+            exit 1
+          fi
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    needs: create-release
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    strategy:
+      # One target failing should not cancel an upload that already works.
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          # Cross-compiled on the x64 runner; the image ships the ARM64 MSVC
+          # tools, so this links without a cross-build container.
+          - aarch64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          bin: evtail
+          target: ${{ matrix.target }}
+          archive: $bin-$tag-$target
+          include: README.md
+          checksum: sha256
+          locked: true
+          token: ${{ secrets.GITHUB_TOKEN }}
