@@ -53,7 +53,7 @@ jobs:
           - aarch64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v7
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           target: ${{ matrix.target }}
       - uses: taiki-e/upload-rust-binary-action@v1
